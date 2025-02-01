@@ -132,9 +132,9 @@ import { useState } from 'react';
 export default function SendEmail() {
   const [formData, setFormData] = useState({
     emails: '',
-    subject: '',
-    text: '',
-    html: '',
+    // subject: '',
+    // text: '',
+    // html: '',
   });
   const [message, setMessage] = useState('');
   const [successCount, setSuccessCount] = useState(0);
@@ -150,54 +150,52 @@ export default function SendEmail() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Split emails by comma or newline and trim whitespace
+  
     const emails = formData.emails
       .split(/[\n,]/)
       .map((email) => email.trim())
       .filter((email) => email.length > 0);
-
+  
     if (emails.length === 0) {
-      setMessage('Error: No valid email addresses provided.');
+      setMessage("Error: No valid email addresses provided.");
       return;
     }
-
+  
     try {
-      const response = await fetch('http://localhost:3000/send-bulk-emails', {
-        method: 'POST',
+      const response = await fetch("http://localhost:3000/send-bulk-emails", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           emails,
           subject: formData.subject,
           text: formData.text,
-          html: formData.html, // Include HTML content
+          html: formData.html,
         }),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send emails');
+        throw new Error(errorData.message || "Failed to send emails");
       }
-
+  
       const data = await response.json();
       setMessage(data.message);
       setSuccessCount(data.sentSuccessfully);
       setFailedEmails(data.failedEmails);
-
-      // Reset form fields after successful submission
-      setFormData({
-        emails: '',
-        subject: '',
-        text: '',
-        html: '',
-      });
+  
+      // Reset only the emails field
+      setFormData((prev) => ({
+        ...prev,
+        emails: "",
+      }));
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       setMessage(`Error: ${error.message}`);
     }
   };
+  
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white shadow-2xl rounded-lg">
