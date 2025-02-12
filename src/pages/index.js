@@ -1,7 +1,5 @@
 import LoginForm from '@/components/Login';
 import { useState } from 'react';
-// import LoginForm from './LoginForm'; // Import the LoginForm component
-
 
 export default function SendEmail() {
   const [formData, setFormData] = useState({
@@ -13,6 +11,7 @@ export default function SendEmail() {
   const [message, setMessage] = useState('');
   const [successCount, setSuccessCount] = useState(0);
   const [failedEmails, setFailedEmails] = useState([]);
+  const [logs, setLogs] = useState([]); // Store logs
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
 
   const handleChange = (e) => {
@@ -59,6 +58,7 @@ export default function SendEmail() {
       setMessage(data.message);
       setSuccessCount(data.sentSuccessfully);
       setFailedEmails(data.failedEmails);
+      setLogs(data.logs || []); // Update logs
 
       setFormData((prev) => ({
         ...prev,
@@ -76,82 +76,99 @@ export default function SendEmail() {
   };
 
   return (
-    <div>
-      {!isLoggedIn ? (
-        <LoginForm onLoginSuccess={handleLoginSuccess} /> // Display login form
-      ) : (
-        <div className="max-w-md mx-auto p-6 bg-white shadow-2xl rounded-lg">
-          <h1 className="text-2xl font-bold mb-4">Send Bulk Emails</h1>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex flex-col space-y-2">
-              <label className="font-medium">Emails (comma or newline separated):</label>
-              <textarea
-                name="emails"
-                value={formData.emails}
-                onChange={handleChange}
-                required
-                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={4}
-              />
-            </div>
-            <div className="flex flex-col space-y-2">
-              <label className="font-medium">Subject:</label>
-              <input
-                type="text"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                required
-                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div className="flex flex-col space-y-2">
-              <label className="font-medium">Plain Text Message:</label>
-              <textarea
-                name="text"
-                value={formData.text}
-                onChange={handleChange}
-                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={4}
-              />
-            </div>
-            <div className="flex flex-col space-y-2">
-              <label className="font-medium">HTML Message:</label>
-              <textarea
-                name="html"
-                value={formData.html}
-                onChange={handleChange}
-                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter HTML content here"
-                rows={4}
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200"
-            >
-              Send Emails
-            </button>
-          </form>
+    <div className="flex flex-col lg:flex-row justify-center items-start space-y-6 lg:space-y-0 lg:space-x-8">
+      {/* Left side: Email form */}
+      <div className="lg:w-1/2 max-w-md mx-auto p-6 bg-white shadow-2xl rounded-lg">
+        {!isLoggedIn ? (
+          <LoginForm onLoginSuccess={handleLoginSuccess} />
+        ) : (
+          <div>
+            <h1 className="text-2xl font-bold mb-4">Send Bulk Emails</h1>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex flex-col space-y-2">
+                <label className="font-medium">Emails (comma or newline separated):</label>
+                <textarea
+                  name="emails"
+                  value={formData.emails}
+                  onChange={handleChange}
+                  required
+                  className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <label className="font-medium">Subject:</label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  required
+                  className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <label className="font-medium">Plain Text Message:</label>
+                <textarea
+                  name="text"
+                  value={formData.text}
+                  onChange={handleChange}
+                  className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                <label className="font-medium">HTML Message:</label>
+                <textarea
+                  name="html"
+                  value={formData.html}
+                  onChange={handleChange}
+                  className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter HTML content here"
+                  rows={4}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-200"
+              >
+                Send Emails
+              </button>
+            </form>
 
-          {message && <p className="mt-4 text-center text-blue-500">{message}</p>}
+            {message && <p className="mt-4 text-center text-green-600">{message}</p>}
 
-          {successCount > 0 && (
-            <p className="mt-2 text-green-600 text-center">
-              Successfully sent: {successCount} emails
-            </p>
-          )}
+            {successCount > 0 && (
+              <p className="mt-2 text-green-600 text-center">
+                Successfully sent: {successCount} emails
+              </p>
+            )}
 
-          {failedEmails.length > 0 && (
-            <div className="mt-2 text-red-600">
-              <p className="text-center">Failed to send: {failedEmails.length} emails</p>
-              <ul className="list-disc list-inside text-sm">
-                {failedEmails.map((email, index) => (
-                  <li key={index}>{email}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {failedEmails.length > 0 && (
+              <div className="mt-2 text-red-600">
+                <p className="text-center">Failed to send: {failedEmails.length} emails</p>
+                <ul className="list-disc list-inside text-sm">
+                  {failedEmails.map((email, index) => (
+                    <li key={index}>{email}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Right side: Email Logs */}
+      {logs.length > 0 && (
+        <div className="lg:w-1/2 max-w-md mx-auto p-6 bg-gray-100 shadow-2xl rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 text-center">Email Logs</h2>
+          <div className="space-y-2">
+            {logs.map((log, index) => (
+              <p key={index} className="text-green-600 text-sm">
+                {log}
+              </p>
+            ))}
+          </div>
         </div>
       )}
     </div>
