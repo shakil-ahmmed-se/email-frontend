@@ -27,12 +27,12 @@ export default function LoginForm({ onLoginSuccess }) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-green-100">
-      <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-lg border border-gray-200 relative">
+    <div className="flex items-center mx-auto justify-center min-h-screen bg-green-100">
+      <div className="w-full mx-auto max-w-md p-6 bg-white shadow-xl rounded-lg border border-gray-200 relative">
         <div className="flex justify-center mb-4">
           <Image src={logo} alt="Login Icon" width={50} height={50} />
         </div>
-        <h1 className="text-2xl font-bold text-center mb-6">WELCOME ALIEN</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">WELCOME TO ALIEN</h1>
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="flex flex-col space-y-2">
             <label className="font-medium text-gray-700">Username:</label>
