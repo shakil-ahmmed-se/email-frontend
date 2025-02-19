@@ -40,7 +40,7 @@ export default function SendEmail() {
     }
 
     try {
-      const response = await fetch("https://api.misterstorehub.shop/send-bulk-emails", {
+      const response = await fetch("http://localhost:3000/send-bulk-emails", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -175,25 +175,30 @@ export default function SendEmail() {
       {/* Right side: Email Logs */}
 
       {/* Right side: Email Logs */}
-      {isLoggedIn && (
-        <div className="lg:w-1/2 p-6 bg-gray-100 shadow-2xl rounded-lg">
-          <h2 className="text-xl font-semibold mb-4 text-center">Email Logs</h2>
-          {logs.length > 0 ? (
-            <div>
-              <h3>Total Emails Sent: {logs.length}</h3>
-              <div className="space-y-2">
-                {logs.map((log, index) => (
-                  <p key={index} className="text-green-600 text-sm">
-                    {log}
-                  </p>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center">No logs available</p>
-          )}
+     {/* Right side: Email Logs */}
+{/* Right side: Email Logs */}
+{isLoggedIn && (
+  <div className="lg:w-1/2 p-6 bg-gray-100 shadow-2xl rounded-lg">
+    <h2 className="text-xl font-semibold mb-4 text-center">Email Logs</h2>
+    {logs.length > 0 ? (
+      <div>
+        <h3>Total Emails Sent: {logs.length}</h3>
+        {/* Scrollable container for all logs */}
+        <div className="max-h-[600px] overflow-y-auto space-y-2 border border-gray-300 p-2 rounded-md">
+          {logs.map((log, index) => (
+            <p key={index} className="text-green-600 text-sm">
+              {log}
+            </p>
+          ))}
         </div>
-      )}
+      </div>
+    ) : (
+      <p className="text-gray-500 text-center">No logs available</p>
+    )}
+  </div>
+)}
+
+
     </div>
   );
 }
