@@ -40,7 +40,7 @@ export default function SendEmail() {
     }
 
     try {
-      const response = await fetch("https://api.misterstorehub.com/send-bulk-emails", {
+      const response = await fetch("https://api.misterstorehub.shop/send-bulk-emails", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
