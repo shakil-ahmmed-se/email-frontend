@@ -8,12 +8,14 @@ export default function SendEmail() {
     text: "",
     html: "",
   });
+  const [smtpCredentials, setSmtpCredentials] = useState([
+    { user: "", pass: "", host: "smtp.gmail.com", port: "587" }
+  ]);
   const [message, setMessage] = useState("");
   const [successCount, setSuccessCount] = useState(0);
   const [failedEmails, setFailedEmails] = useState([]);
-  const [logs, setLogs] = useState([]); // Store logs
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
-  // sending loading
+  const [logs, setLogs] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -24,9 +26,41 @@ export default function SendEmail() {
     });
   };
 
+  const handleSmtpChange = (index, field, value) => {
+    const updatedCredentials = [...smtpCredentials];
+    updatedCredentials[index][field] = value;
+    setSmtpCredentials(updatedCredentials);
+  };
+
+  const addSmtpCredential = () => {
+    setSmtpCredentials([...smtpCredentials, 
+      { user: "", pass: "", host: "smtp.gmail.com", port: "587" }
+    ]);
+  };
+
+  const removeSmtpCredential = (index) => {
+    const updated = smtpCredentials.filter((_, i) => i !== index);
+    setSmtpCredentials(updated);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Validate SMTP credentials
+    if (smtpCredentials.length === 0) {
+      setMessage("Error: At least one SMTP credential is required.");
+      setIsLoading(false);
+      return;
+    }
+
+    for (const cred of smtpCredentials) {
+      if (!cred.user || !cred.pass) {
+        setMessage("Error: All SMTP credentials must have an email and password.");
+        setIsLoading(false);
+        return;
+      }
+    }
 
     const emails = formData.emails
       .split(/[\n,]/)
@@ -40,12 +74,13 @@ export default function SendEmail() {
     }
 
     try {
-      const response = await fetch("https://api.misterstorehub.shop/send-bulk-emails", {
+      const response = await fetch("https://api.misterstorehub.shop/send-emails", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          smtp_credentials: smtpCredentials,
           emails,
           subject: formData.subject,
           text: formData.text,
@@ -62,9 +97,8 @@ export default function SendEmail() {
       setMessage(data.message);
       setSuccessCount(data.sentSuccessfully);
       setFailedEmails(data.failedEmails);
-      console.log("email senging", data.logs.map);
-      setLogs(data.logs || []); // Update logs
-
+      setLogs(data.logs || []);
+      
       setFormData((prev) => ({
         ...prev,
         emails: "",
@@ -73,29 +107,89 @@ export default function SendEmail() {
       console.error("Error:", error);
       setMessage(`Error: ${error.message}`);
     } finally {
-      setIsLoading(false); // Stop loading after request completes
+      setIsLoading(false);
     }
   };
 
-  // Handle login success
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
   };
 
   return (
-    <div className="flex flex-col-1 lg:flex-row  items-start space-y-6 lg:space-y-0 lg:space-x-8">
-      {/* Left side: Email form */}
-      <div className="lg:w-1/2 mx-auto  p-6 bg-white shadow-xl rounded-lg">
+    <div className="flex flex-col-1 lg:flex-row items-start space-y-6 lg:space-y-0 lg:space-x-8">
+      <div className="lg:w-1/2 mx-auto p-6 bg-white shadow-xl rounded-lg">
         {!isLoggedIn ? (
           <LoginForm onLoginSuccess={handleLoginSuccess} />
         ) : (
-          <div class="ms-10">
+          <div className="ms-10">
             <h1 className="text-2xl font-bold mb-4">Send Bulk Emails</h1>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* SMTP Credentials Section */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-lg">SMTP Credentials:</h3>
+                {smtpCredentials.map((cred, index) => (
+                  <div key={index} className="border p-4 rounded-md space-y-2">
+                    <div className="flex flex-col space-y-2">
+                      <label>Email (User):</label>
+                      <input
+                        type="email"
+                        value={cred.user}
+                        onChange={(e) => handleSmtpChange(index, 'user', e.target.value)}
+                        required
+                        className="p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <label>App Password:</label>
+                      <input
+                        type="password"
+                        value={cred.pass}
+                        onChange={(e) => handleSmtpChange(index, 'pass', e.target.value)}
+                        required
+                        className="p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    {/* <div className="flex flex-col space-y-2">
+                      <label>SMTP Host:</label>
+                      <input
+                        type="text"
+                        value={cred.host}
+                        onChange={(e) => handleSmtpChange(index, 'host', e.target.value)}
+                        className="p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <label>SMTP Port:</label>
+                      <input
+                        type="number"
+                        value={cred.port}
+                        onChange={(e) => handleSmtpChange(index, 'port', e.target.value)}
+                        className="p-2 border border-gray-300 rounded-md"
+                      />
+                    </div> */}
+                    {smtpCredentials.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeSmtpCredential(index)}
+                        className="text-red-500 text-sm hover:text-red-700"
+                      >
+                        Remove Credential
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addSmtpCredential}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                >
+                  Add SMTP Credential
+                </button>
+              </div>
+
+              {/* Email Content Section */}
               <div className="flex flex-col space-y-2">
-                <label className="font-medium">
-                  Emails (comma or newline separated):
-                </label>
+                <label className="font-medium">Recipient Emails (comma/newline separated):</label>
                 <textarea
                   name="emails"
                   value={formData.emails}
@@ -137,6 +231,7 @@ export default function SendEmail() {
                   rows={4}
                 />
               </div>
+
               <button
                 type="submit"
                 className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-200 disabled:bg-green-400"
@@ -146,8 +241,11 @@ export default function SendEmail() {
               </button>
             </form>
 
+            {/* Results Display */}
             {message && (
-              <p className="mt-4 text-center text-green-600">{message}</p>
+              <p className={`mt-4 text-center ${message.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                {message}
+              </p>
             )}
 
             {successCount > 0 && (
@@ -172,33 +270,29 @@ export default function SendEmail() {
         )}
       </div>
 
-      {/* Right side: Email Logs */}
-
-      {/* Right side: Email Logs */}
-     {/* Right side: Email Logs */}
-{/* Right side: Email Logs */}
-{isLoggedIn && (
-  <div className="lg:w-1/2 p-6 bg-gray-100 shadow-2xl rounded-lg">
-    <h2 className="text-xl font-semibold mb-4 text-center">Email Logs</h2>
-    {logs.length > 0 ? (
-      <div>
-        <h3>Total Emails Sent: {logs.length}</h3>
-        {/* Scrollable container for all logs */}
-        <div className="max-h-[600px] overflow-y-auto space-y-2 border border-gray-300 p-2 rounded-md">
-          {logs.map((log, index) => (
-            <p key={index} className="text-green-600 text-sm">
-              {log}
-            </p>
-          ))}
+      {/* Logs Section */}
+      {isLoggedIn && (
+        <div className="lg:w-1/2 p-6 bg-gray-100 shadow-2xl rounded-lg">
+          <h2 className="text-xl font-semibold mb-4 text-center">Email Logs</h2>
+          {logs.length > 0 ? (
+            <div>
+              <h3 className="text-center mb-2">Total Emails Sent: {logs.length}</h3>
+              <div className="max-h-[600px] overflow-y-auto space-y-2 border border-gray-300 p-2 rounded-md">
+                {logs.map((log, index) => (
+                  <p 
+                    key={index} 
+                    className={`text-sm p-1 rounded ${log.includes('✅') ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}
+                  >
+                    {log}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center">No logs available</p>
+          )}
         </div>
-      </div>
-    ) : (
-      <p className="text-gray-500 text-center">No logs available</p>
-    )}
-  </div>
-)}
-
-
+      )}
     </div>
   );
 }
