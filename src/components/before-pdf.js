@@ -9,7 +9,7 @@ export default function SendEmail() {
     html: "",
   });
   const [smtpCredentials, setSmtpCredentials] = useState([
-    { user: "", pass: "", host: "smtp.gmail.com", port: "587" },
+    { user: "", pass: "", host: "smtp.gmail.com", port: "587" }
   ]);
   const [message, setMessage] = useState("");
   const [successCount, setSuccessCount] = useState(0);
@@ -17,7 +17,6 @@ export default function SendEmail() {
   const [logs, setLogs] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [attachment, setAttachment] = useState(null); // State for file attachment
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,9 +33,8 @@ export default function SendEmail() {
   };
 
   const addSmtpCredential = () => {
-    setSmtpCredentials([
-      ...smtpCredentials,
-      { user: "", pass: "", host: "smtp.gmail.com", port: "587" },
+    setSmtpCredentials([...smtpCredentials, 
+      { user: "", pass: "", host: "smtp.gmail.com", port: "587" }
     ]);
   };
 
@@ -45,21 +43,17 @@ export default function SendEmail() {
     setSmtpCredentials(updated);
   };
 
-  const handleFileChange = (e) => {
-    setAttachment(e.target.files[0]); // Store the selected file
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-  
+
     // Validate SMTP credentials
     if (smtpCredentials.length === 0) {
       setMessage("Error: At least one SMTP credential is required.");
       setIsLoading(false);
       return;
     }
-  
+
     for (const cred of smtpCredentials) {
       if (!cred.user || !cred.pass) {
         setMessage("Error: All SMTP credentials must have an email and password.");
@@ -67,60 +61,50 @@ export default function SendEmail() {
         return;
       }
     }
-  
+
     const emails = formData.emails
       .split(/[\n,]/)
       .map((email) => email.trim())
       .filter((email) => email.length > 0);
-  
+
     if (emails.length === 0) {
       setMessage("Error: No valid email addresses provided.");
       setIsLoading(false);
       return;
     }
-  
-    // Create FormData to include the file
-    const formDataToSend = new FormData();
-    formDataToSend.append("smtp_credentials", JSON.stringify(smtpCredentials));
-    formDataToSend.append("emails", JSON.stringify(emails));
-    formDataToSend.append("subject", formData.subject);
-    formDataToSend.append("text", formData.text);
-    formDataToSend.append("html", formData.html);
-    if (attachment) {
-      formDataToSend.append("attachment", attachment);
-    }
-    
-    // Debug: Log the FormData being sent
-    for (const [key, value] of formDataToSend.entries()) {
-      console.log(key, value);
-    }
-  
+
     try {
       const response = await fetch("https://api.misterstorehub.shop/send-emails", {
         method: "POST",
-        body: formDataToSend,
-        credentials: "include", // Include cookies in the request
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          smtp_credentials: smtpCredentials,
+          emails,
+          subject: formData.subject,
+          text: formData.text,
+          html: formData.html,
+        }),
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Backend Error:", errorData); // Debug: Log backend error
         throw new Error(errorData.message || "Failed to send emails");
       }
-  
+
       const data = await response.json();
       setMessage(data.message);
       setSuccessCount(data.sentSuccessfully);
       setFailedEmails(data.failedEmails);
       setLogs(data.logs || []);
-  
+      
       setFormData((prev) => ({
         ...prev,
         emails: "",
       }));
-      setAttachment(null); // Clear the file input after submission
     } catch (error) {
-      console.error("Error:", error); // Debug: Log the error
+      console.error("Error:", error);
       setMessage(`Error: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -150,7 +134,7 @@ export default function SendEmail() {
                       <input
                         type="email"
                         value={cred.user}
-                        onChange={(e) => handleSmtpChange(index, "user", e.target.value)}
+                        onChange={(e) => handleSmtpChange(index, 'user', e.target.value)}
                         required
                         className="p-2 border border-gray-300 rounded-md"
                       />
@@ -160,11 +144,29 @@ export default function SendEmail() {
                       <input
                         type="password"
                         value={cred.pass}
-                        onChange={(e) => handleSmtpChange(index, "pass", e.target.value)}
+                        onChange={(e) => handleSmtpChange(index, 'pass', e.target.value)}
                         required
                         className="p-2 border border-gray-300 rounded-md"
                       />
                     </div>
+                    {/* <div className="flex flex-col space-y-2">
+                      <label>SMTP Host:</label>
+                      <input
+                        type="text"
+                        value={cred.host}
+                        onChange={(e) => handleSmtpChange(index, 'host', e.target.value)}
+                        className="p-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <label>SMTP Port:</label>
+                      <input
+                        type="number"
+                        value={cred.port}
+                        onChange={(e) => handleSmtpChange(index, 'port', e.target.value)}
+                        className="p-2 border border-gray-300 rounded-md"
+                      />
+                    </div> */}
                     {smtpCredentials.length > 1 && (
                       <button
                         type="button"
@@ -230,16 +232,6 @@ export default function SendEmail() {
                 />
               </div>
 
-              {/* File Attachment Section */}
-              <div className="flex flex-col space-y-2">
-                <label className="font-medium">Attachment:</label>
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
               <button
                 type="submit"
                 className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-200 disabled:bg-green-400"
@@ -251,7 +243,7 @@ export default function SendEmail() {
 
             {/* Results Display */}
             {message && (
-              <p className={`mt-4 text-center ${message.startsWith("Error") ? "text-red-600" : "text-green-600"}`}>
+              <p className={`mt-4 text-center ${message.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
                 {message}
               </p>
             )}
@@ -287,9 +279,9 @@ export default function SendEmail() {
               <h3 className="text-center mb-2">Total Emails Sent: {logs.length}</h3>
               <div className="max-h-[600px] overflow-y-auto space-y-2 border border-gray-300 p-2 rounded-md">
                 {logs.map((log, index) => (
-                  <p
-                    key={index}
-                    className={`text-sm p-1 rounded ${log.includes("✅") ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}
+                  <p 
+                    key={index} 
+                    className={`text-sm p-1 rounded ${log.includes('✅') ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}
                   >
                     {log}
                   </p>
