@@ -7,6 +7,7 @@ export default function SendEmail() {
     subject: "",
     text: "",
     html: "",
+    convertToPdf: false, // New state for PDF conversion checkbox
   });
   const [smtpCredentials, setSmtpCredentials] = useState([
     { user: "", pass: "", host: "smtp.gmail.com", port: "587" },
@@ -17,13 +18,12 @@ export default function SendEmail() {
   const [logs, setLogs] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [attachment, setAttachment] = useState(null); // State for file attachment
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
@@ -43,10 +43,6 @@ export default function SendEmail() {
   const removeSmtpCredential = (index) => {
     const updated = smtpCredentials.filter((_, i) => i !== index);
     setSmtpCredentials(updated);
-  };
-
-  const handleFileChange = (e) => {
-    setAttachment(e.target.files[0]); // Store the selected file
   };
 
   const handleSubmit = async (e) => {
@@ -79,32 +75,25 @@ export default function SendEmail() {
       return;
     }
   
-    // Create FormData to include the file
+    // Create FormData with the new PDF conversion option
     const formDataToSend = new FormData();
     formDataToSend.append("smtp_credentials", JSON.stringify(smtpCredentials));
     formDataToSend.append("emails", JSON.stringify(emails));
     formDataToSend.append("subject", formData.subject);
     formDataToSend.append("text", formData.text);
     formDataToSend.append("html", formData.html);
-    if (attachment) {
-      formDataToSend.append("attachment", attachment);
-    }
+    formDataToSend.append("convertToPdf", formData.convertToPdf);
     
-    // Debug: Log the FormData being sent
-    for (const [key, value] of formDataToSend.entries()) {
-      console.log(key, value);
-    }
-    // https://api.misterstorehub.shop/send-emails
     try {
       const response = await fetch("https://api.misterstorehub.shop/send-emails", {
         method: "POST",
         body: formDataToSend,
-        credentials: "include", // Include cookies in the request
+        credentials: "include",
       });
   
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Backend Error:", errorData); // Debug: Log backend error
+        console.error("Backend Error:", errorData);
         throw new Error(errorData.message || "Failed to send emails");
       }
   
@@ -118,9 +107,8 @@ export default function SendEmail() {
         ...prev,
         emails: "",
       }));
-      setAttachment(null); // Clear the file input after submission
     } catch (error) {
-      console.error("Error:", error); // Debug: Log the error
+      console.error("Error:", error);
       setMessage(`Error: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -228,16 +216,18 @@ export default function SendEmail() {
                   placeholder="Enter HTML content here"
                   rows={4}
                 />
-              </div>
-
-              {/* File Attachment Section */}
-              <div className="flex flex-col space-y-2">
-                <label className="font-medium">Attachment:</label>
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="flex items-center space-x-2 mt-2">
+                  <input
+                    type="checkbox"
+                    name="convertToPdf"
+                    checked={formData.convertToPdf}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label className="text-sm text-gray-600">
+                    Convert HTML to PDF and attach (if unchecked, HTML will be sent as email body)
+                  </label>
+                </div>
               </div>
 
               <button
